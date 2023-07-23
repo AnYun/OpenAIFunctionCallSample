@@ -11,7 +11,7 @@ namespace OpenAIFunctionCallSample
         {
             var apikey = "{your api key}";
             var apiUrl = "https://{your openai endpoint}.openai.azure.com";
-            string deploymentName = "ChatGPT";
+            string deploymentName = "{your deployment name}";
 
             var chatCompletionsOptions = new ChatCompletionsOptions()
             {
