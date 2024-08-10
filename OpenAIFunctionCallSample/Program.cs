@@ -2,6 +2,7 @@
 using Azure;
 using OpenAIFunctionCallSample.Models;
 using System.Text.Json;
+using OpenAI.Chat;
 
 namespace OpenAIFunctionCallSample
 {
@@ -13,46 +14,46 @@ namespace OpenAIFunctionCallSample
             var apiUrl = "https://{your openai endpoint}.openai.azure.com";
             string deploymentName = "{your deployment name}";
 
-            var chatCompletionsOptions = new ChatCompletionsOptions()
+            var chatCompletionsOptions = new ChatCompletionOptions();
+
+            foreach (var item in ChatTools.GetChatTools())
             {
-                Messages =
-                {
-                    new ChatMessage(ChatRole.User, "我想要點兩份牛排")
-                    //new ChatMessage(ChatRole.User, "請問台北市的天氣?")
-                    //new ChatMessage(ChatRole.User, "請問 PS5 多少錢?")
-                },
-                Functions = FuntionDefinitions.GetFuntionDefinitions()
-            };
+                chatCompletionsOptions.Tools.Add(item);
+            }
 
-            var client = new OpenAIClient(new Uri(apiUrl), new AzureKeyCredential(apikey));
-            var response = await client.GetChatCompletionsAsync(
-                deploymentOrModelName: deploymentName,
-                chatCompletionsOptions);
+            List<ChatMessage> conversationMessages =
+            [
+                //new UserChatMessage("我想要點兩份牛排"),
+                //new UserChatMessage("請問台北市的天氣?"),
+                new UserChatMessage("請問 PS5 多少錢?"),
+            ];
 
+            var client = new AzureOpenAIClient(new Uri(apiUrl), new AzureKeyCredential(apikey)).GetChatClient(deploymentName);
+            ChatCompletion completion = client.CompleteChat(conversationMessages, options: chatCompletionsOptions);
 
-            foreach (var choice in response.Value.Choices)
+            if (completion.FinishReason == ChatFinishReason.ToolCalls)
             {
-                if (choice.FinishReason == CompletionsFinishReason.FunctionCall)
+                foreach (var toolCall in completion.ToolCalls)
                 {
-                    switch (choice.Message.FunctionCall.Name)
+                    switch (toolCall.FunctionName)
                     {
                         case "CalFoodPrice":
-                            var foodInfo = JsonSerializer.Deserialize<FoodInfo>(choice.Message.FunctionCall.Arguments);
+                            var foodInfo = JsonSerializer.Deserialize<FoodInfo>(toolCall.FunctionArguments);
                             var foodPrice = Functions.CalFoodPrice(foodInfo);
                             Console.WriteLine($"您點了 {foodInfo.Count} 份 {foodInfo.Food} 總共 {foodPrice} 元");
                             break;
                         case "GetCurrentWeather":
-                            var weatherConfig = JsonSerializer.Deserialize<WeatherConfig>(choice.Message.FunctionCall.Arguments);
+                            var weatherConfig = JsonSerializer.Deserialize<WeatherConfig>(toolCall.FunctionArguments);
                             Console.WriteLine(Functions.GetCurrentWeather(weatherConfig));
                             break;
                         default:
                             break;
                     }
                 }
-                else
-                {
-                    Console.Write(choice.Message.Content);
-                }
+            }
+            else
+            {
+                Console.Write(completion);
             }
         }
     }

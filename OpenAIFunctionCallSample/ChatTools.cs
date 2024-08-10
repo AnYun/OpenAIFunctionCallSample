@@ -1,4 +1,4 @@
-﻿using Azure.AI.OpenAI;
+﻿using OpenAI.Chat;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,19 +8,18 @@ using System.Threading.Tasks;
 
 namespace OpenAIFunctionCallSample
 {
-    internal static class FuntionDefinitions
+    internal static class ChatTools
     {
         /// <summary>
-        /// Get FuntionDefinitions
+        /// Get ChatTools
         /// </summary>
         /// <returns></returns>
-        public static List<FunctionDefinition> GetFuntionDefinitions()
+        public static List<ChatTool> GetChatTools()
         {
-            var calFoodPriceFuntionDefinition = new FunctionDefinition()
-            {
-                Name = "CalFoodPrice",
-                Description = "計算客戶餐點價錢",
-                Parameters = BinaryData.FromObjectAsJson(
+            var calFoodPriceChatTool = ChatTool.CreateFunctionTool(
+                functionName: "CalFoodPrice",
+                functionDescription: "計算客戶餐點價錢",
+                functionParameters: BinaryData.FromObjectAsJson(
                     new
                     {
                         Type = "object",
@@ -39,14 +38,13 @@ namespace OpenAIFunctionCallSample
                             }
                         },
                         Required = new[] { "count", "food" },
-                    }, new JsonSerializerOptions() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }),
-            };
+                    }, new JsonSerializerOptions() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase })
+            );
 
-            var getWeatherFuntionDefinition = new FunctionDefinition()
-            {
-                Name = "GetCurrentWeather",
-                Description = "取得指定地點的天氣資訊",
-                Parameters = BinaryData.FromObjectAsJson(
+            var getWeatherChatTool = ChatTool.CreateFunctionTool(
+                functionName: "GetCurrentWeather",
+                functionDescription: "取得指定地點的天氣資訊",
+                functionParameters: BinaryData.FromObjectAsJson(
                     new
                     {
                         Type = "object",
@@ -64,12 +62,12 @@ namespace OpenAIFunctionCallSample
                             }
                         },
                         Required = new[] { "location" },
-                    }, new JsonSerializerOptions() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }),
-            };
+                    }, new JsonSerializerOptions() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase })
+            );
 
-            return new List<FunctionDefinition> {
-                calFoodPriceFuntionDefinition,
-                getWeatherFuntionDefinition
+            return new List<ChatTool> {
+                calFoodPriceChatTool,
+                getWeatherChatTool
             };
         }
     }
